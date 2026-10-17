@@ -61,6 +61,52 @@ def test_list_tasks_filters_and_orders(db):
     assert len(db.list_tasks()) == 3
 
 
+def test_list_tasks_scopes_to_client(db):
+    db.create_task("mine1", "image/crop", {}, client_id="client-a")
+    db.create_task("mine2", "image/crop", {}, client_id="client-a")
+    db.create_task("theirs", "image/crop", {}, client_id="client-b")
+    db.create_task("anon", "image/crop", {})
+
+    assert {t["id"] for t in db.list_tasks(client_id="client-a")} == {"mine1", "mine2"}
+    assert {t["id"] for t in db.list_tasks(client_id="client-b")} == {"theirs"}
+    # No client id means no scoping — callers must not use this to list everyone.
+    assert len(db.list_tasks()) == 4
+
+
+def test_client_id_survives_create_and_read(db):
+    db.create_task("c1", "audio/convert", {}, client_id="abc123")
+    assert db.get_task("c1")["client_id"] == "abc123"
+
+
+def test_migration_adds_client_id_to_old_database(tmp_path):
+    """A database created before the client_id column must keep working."""
+    import sqlite3
+
+    path = tmp_path / "old.db"
+    conn = sqlite3.connect(path)
+    conn.execute(
+        """CREATE TABLE tasks (
+               id TEXT PRIMARY KEY, tool TEXT NOT NULL, status TEXT NOT NULL,
+               progress INTEGER DEFAULT 0, input_file TEXT, output_file TEXT,
+               input_size INTEGER, output_size INTEGER, settings TEXT, error TEXT,
+               created_at TIMESTAMP, updated_at TIMESTAMP)"""
+    )
+    conn.execute(
+        "INSERT INTO tasks (id, tool, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        ("legacy", "video/compress", "done", "2026-01-01 00:00:00", "2026-01-01 00:00:00"),
+    )
+    conn.commit()
+    conn.close()
+
+    database = Database(path)
+    try:
+        assert database.get_task("legacy")["client_id"] is None
+        database.create_task("new", "image/crop", {}, client_id="xyz")
+        assert database.get_task("new")["client_id"] == "xyz"
+    finally:
+        database.close()
+
+
 def test_stats_accumulate_and_group(db):
     db.create_task("s1", "video/compress", {})
     db.update_task("s1", status="done")

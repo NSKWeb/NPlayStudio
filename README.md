@@ -32,7 +32,7 @@ the result back.
 | **Real progress** | Read from ffmpeg's own `-progress` stream, not estimated |
 | **Self-hosted** | Docker Compose plus nginx; runs on one small VPS |
 
-<img src="docs/screenshots/home.png" alt="NPlayStudio dashboard: hero, live usage statistics, search and category filters, and a grid of the nine tool cards." width="100%">
+<img src="docs/screenshots/home.png" alt="NPlayStudio dashboard: hero, site-wide usage counters, search and category filters, and a grid of the nine tool cards." width="100%">
 
 ---
 
@@ -56,6 +56,14 @@ Every tool answers with a `task_id`. Supporting endpoints: `GET /api/status/{tas
 `GET /api/file/{task_id}`, `GET /api/history`, `GET /api/stats`, `GET /api/tools`,
 `GET /api/presets`, `DELETE /api/task/{task_id}` and `GET /health`. Interactive
 docs live at `/docs`.
+
+The frontend generates a random id per browser (`nplay.client` in `localStorage`)
+and sends it as `X-Client-Id` on every request. `GET /api/history` returns only
+the jobs carrying that id — without one it returns an empty list — and
+`GET /api/file/{task_id}` refuses a task whose stored client id does not match,
+via the header or the `client` query parameter the download link uses. Jobs
+submitted straight to the API with no client id have no owner and stay
+downloadable by anyone holding the id.
 
 Here is a tool page — pick a file, choose options, press one button:
 
@@ -191,7 +199,7 @@ All settings use the `NPLAY_` prefix and can be set in `backend/.env`.
 python3 -m pytest backend/tests -q
 ```
 
-79 tests, no mocks. The suite generates real media with FFmpeg, uploads it
+88 tests, no mocks. The suite generates real media with FFmpeg, uploads it
 through a real HTTP client, lets the real worker process it, and checks the
 downloaded bytes carry the right container signature. `test_units.py` covers the
 SQLite layer and the service helpers directly.
@@ -276,8 +284,9 @@ from the domain:
 
 Then:
 
-- Set your real AdSense publisher ID in `frontend/index.html` (currently
-  `ca-pub-0000000000000000`).
+- Set your real AdSense publisher ID in `frontend/assets/app.js` (currently
+  `ca-pub-0000000000000000`). Ads load only after a visitor accepts the consent
+  banner, so nothing is requested until then.
 - Serve over HTTPS only — the cookie banner and AdSense both expect it.
 
 ---

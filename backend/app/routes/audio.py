@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import ValidationError
 
 from ..schemas import AudioConvertForm, AudioExtractForm
 from ..services.file_service import AUDIO_EXT, VIDEO_EXT
-from .common import submit_job
+from .common import client_id_from, submit_job
 
 router = APIRouter(prefix="/api/audio", tags=["audio"])
 
@@ -28,9 +28,13 @@ async def extract(
     format: str = Form("mp3"),
     bitrate: str = Form("192k"),
     sample_rate: int | None = Form(None),
+    x_client_id: str | None = Header(None),
 ):
     form = _validated(AudioExtractForm, format=format, bitrate=bitrate, sample_rate=sample_rate)
-    return await submit_job("audio/extract", form.model_dump(), [file], _ACCEPTED)
+    return await submit_job(
+        "audio/extract", form.model_dump(), [file], _ACCEPTED,
+        client_id_from(x_client_id),
+    )
 
 
 @router.post("/convert")
@@ -39,6 +43,10 @@ async def convert(
     format: str = Form("mp3"),
     bitrate: str = Form("192k"),
     sample_rate: int | None = Form(None),
+    x_client_id: str | None = Header(None),
 ):
     form = _validated(AudioConvertForm, format=format, bitrate=bitrate, sample_rate=sample_rate)
-    return await submit_job("audio/convert", form.model_dump(), [file], _ACCEPTED)
+    return await submit_job(
+        "audio/convert", form.model_dump(), [file], _ACCEPTED,
+        client_id_from(x_client_id),
+    )

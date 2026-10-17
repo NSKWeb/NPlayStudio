@@ -11,9 +11,10 @@ from ..config import get_settings
 
 async def create_task(task_id: str, tool: str, settings: dict[str, Any],
                       input_file: str | None = None, input_size: int | None = None,
-                      status: str = "queued") -> dict[str, Any]:
+                      status: str = "queued", client_id: str | None = None) -> dict[str, Any]:
     return await database.acreate_task(
-        task_id, tool, settings, input_file=input_file, input_size=input_size, status=status
+        task_id, tool, settings, input_file=input_file, input_size=input_size,
+        status=status, client_id=client_id,
     )
 
 
@@ -44,8 +45,9 @@ async def get_task(task_id: str) -> dict[str, Any] | None:
     return await database.aget_task(task_id)
 
 
-async def recent_tasks(limit: int = 20, tool: str | None = None) -> list[dict[str, Any]]:
-    return await database.alist_tasks(limit=limit, tool=tool)
+async def recent_tasks(limit: int = 20, tool: str | None = None,
+                       client_id: str | None = None) -> list[dict[str, Any]]:
+    return await database.alist_tasks(limit=limit, tool=tool, client_id=client_id)
 
 
 async def stats() -> dict[str, Any]:

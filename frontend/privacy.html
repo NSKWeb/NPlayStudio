@@ -25,17 +25,27 @@
           the requested conversion, compression or crop. They are deleted automatically one hour after the
           task is created. We do not inspect, share, sell or use their contents for anything else.</li>
       <li><strong>Task metadata.</strong> We keep a record of the tool used, the job status, and the input and
-          output byte sizes. This powers the dashboard statistics and lets us detect abuse. It does not
+          output byte sizes, linked to a random browser identifier (see below). This powers your own
+          "recent activity" list and the site-wide counters, and lets us detect abuse. It does not
           contain file contents.</li>
+      <li><strong>Browser identifier.</strong> Your browser generates a random 32-character id the first time
+          you load the site and stores it in <code class="mono">localStorage</code> under
+          <code class="mono">nplay.client</code>. We attach it to the jobs you submit so the dashboard can
+          show you your own recent activity rather than everyone's. It is not derived from your device or
+          network, and it is not used to track you across other sites. Clearing your browser storage for
+          this site resets it.</li>
       <li><strong>Server logs.</strong> Our web server and reverse proxy record IP address, user agent and
-          requested URL for security and troubleshooting.</li>
+          requested URL for security and troubleshooting. Download records keep the IP address and user
+          agent of the download request for abuse detection; they are never shown on the public site.</li>
     </ul>
 
     <h2>Cookies and advertising</h2>
     <p>We use cookies for essential functionality (for example remembering your light or dark theme
     preference and your cookie-consent choice). These are not used for tracking.</p>
-    <p>We also display advertising through <strong>Google AdSense</strong>. Third-party vendors, including
-    Google, use cookies to serve ads based on your prior visits to this and other websites.</p>
+    <p>We also display advertising through <strong>Google AdSense</strong>, but only after you choose
+    <em>Accept</em> in the consent banner. If you choose <em>Essential only</em>, the AdSense script is
+    never loaded and no advertising cookies are set. When advertising is enabled, third-party vendors,
+    including Google, use cookies to serve ads based on your prior visits to this and other websites.</p>
     <ul>
       <li>Google's use of advertising cookies enables it and its partners to serve ads to you based on your
           visits to this site and/or other sites on the internet.</li>

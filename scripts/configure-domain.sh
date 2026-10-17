@@ -75,7 +75,7 @@ echo "Remaining placeholder references:"
 if grep -rn "nplaystudio\.example\.com" . \
         --exclude-dir=.git --exclude-dir=__pycache__ 2>/dev/null; then
     echo
-    echo "note: update the AdSense publisher id in frontend/index.html separately."
+    echo "note: update the AdSense publisher id in frontend/assets/app.js separately."
 else
     echo "  none"
 fi

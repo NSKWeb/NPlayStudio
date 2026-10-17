@@ -24,12 +24,18 @@
       <tbody>
         <tr><td class="mono">nplay.theme</td><td>localStorage</td><td>Remembers light or dark theme</td><td>Until cleared</td></tr>
         <tr><td class="mono">nplay.consent</td><td>localStorage</td><td>Remembers your cookie choice</td><td>Until cleared</td></tr>
+        <tr><td class="mono">nplay.client</td><td>localStorage</td><td>Random id that scopes "your recent activity" to your own jobs</td><td>Until cleared</td></tr>
       </tbody>
     </table>
-    <p>These are set by us, contain no identifiers, and are never shared. They cannot be disabled without
-    breaking basic site behaviour.</p>
+    <p>These are set by us and are never shared with third parties. The theme and consent values carry no
+    identifiers at all. <span class="mono">nplay.client</span> is a random value the page generates for your
+    browser; it holds no personal data, but it does let the server tell your jobs apart from another
+    visitor's, so it counts as a pseudonymous identifier. Clearing it simply gives you a fresh, empty
+    history. None of these can be disabled without breaking basic site behaviour.</p>
 
     <h2>Advertising</h2>
+    <p>Advertising cookies are set by Google AdSense and are loaded <strong>only if you choose
+    "Accept"</strong> in the consent banner. Choosing "Essential only" means the AdSense script never runs.</p>
     <table>
       <thead><tr><th>Provider</th><th>Purpose</th><th>More information</th></tr></thead>
       <tbody>

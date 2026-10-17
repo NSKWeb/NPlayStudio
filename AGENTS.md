@@ -95,6 +95,18 @@ by a regression test that fails on the old code:
   duration before running.
 - `safe_filename` truncated the entire name, which strips the extension from a
   long filename and then fails the extension allowlist. Truncate the stem only.
+- `/api/history` returned every task on the server plus the raw `downloads`
+  table (IP address and user agent). Any visitor could read everyone's task ids
+  and then `GET /api/file/{id}` any output. Tasks now carry a `client_id` (a
+  random per-browser value the frontend sends as `X-Client-Id`); history is
+  scoped to it, and download/delete refuse a task whose stored id does not
+  match. A missing client id on history returns an empty list, never "all".
+  Tasks with no owner (queued straight to the API) stay open — do not "fix"
+  that by inventing an owner.
+- AdSense was loaded unconditionally in `index.html` while the cookie banner
+  claimed ads ran "with consent". The loader now lives in `assets/app.js`
+  (`loadAds()`) and only runs after the visitor chooses "Accept". Keep the
+  publisher id there, not in the HTML.
 
 Quick manual probe pattern (no test suite needed): set the `NPLAY_*` env vars to
 a temp dir, import `create_app`, drive it with `TestClient`, and poll

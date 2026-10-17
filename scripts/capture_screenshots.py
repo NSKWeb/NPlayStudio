@@ -43,10 +43,11 @@ def main() -> int:
             device_scale_factor=SCALE,
             color_scheme="dark",
         )
-        # Dark theme, consent already answered, so no banner covers the UI.
+        # Dark theme, consent answered "essential only" so the banner is gone and
+        # no ad scripts are injected into the screenshots.
         context.add_init_script(
             "localStorage.setItem('nplay.theme', 'dark');"
-            "localStorage.setItem('nplay.consent', 'accepted');"
+            "localStorage.setItem('nplay.consent', 'essential');"
         )
         page = context.new_page()
         for name, path, width, height in PAGES:

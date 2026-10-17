@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     output_size   INTEGER,
     settings      TEXT,
     error         TEXT,
+    client_id     TEXT,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -100,7 +101,21 @@ class Database:
     def init_schema(self) -> None:
         with self._lock:
             self._conn.executescript(SCHEMA)
+            self._migrate()
             self._conn.commit()
+
+    def _migrate(self) -> None:
+        """Add columns that older databases predate. Called on every startup.
+
+        The client_id index is created here rather than in SCHEMA because a
+        pre-existing tasks table has no such column until the ALTER below runs.
+        """
+        existing = {row["name"] for row in self._conn.execute("PRAGMA table_info(tasks)")}
+        if "client_id" not in existing:
+            self._conn.execute("ALTER TABLE tasks ADD COLUMN client_id TEXT")
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tasks_client_id ON tasks (client_id, created_at DESC)"
+        )
 
     def close(self) -> None:
         with self._lock:
@@ -110,14 +125,15 @@ class Database:
 
     def create_task(self, task_id: str, tool: str, settings: dict[str, Any],
                     input_file: str | None = None, input_size: int | None = None,
-                    status: str = "queued") -> dict[str, Any]:
+                    status: str = "queued", client_id: str | None = None) -> dict[str, Any]:
         with self._lock:
             self._conn.execute(
                 """INSERT INTO tasks
-                   (id, tool, status, progress, input_file, input_size, settings, created_at, updated_at)
-                   VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)""",
+                   (id, tool, status, progress, input_file, input_size, settings,
+                    client_id, created_at, updated_at)
+                   VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?)""",
                 (task_id, tool, status, input_file, input_size,
-                 json.dumps(settings), _now(), _now()),
+                 json.dumps(settings), client_id, _now(), _now()),
             )
             self._conn.commit()
         return self.get_task(task_id)  # type: ignore[return-value]
@@ -143,12 +159,19 @@ class Database:
             row = self._conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
         return _task_row(row) if row else None
 
-    def list_tasks(self, limit: int = 20, tool: str | None = None) -> list[dict[str, Any]]:
+    def list_tasks(self, limit: int = 20, tool: str | None = None,
+                   client_id: str | None = None) -> list[dict[str, Any]]:
         query = "SELECT * FROM tasks"
         params: list[Any] = []
+        clauses: list[str] = []
         if tool:
-            query += " WHERE tool = ?"
+            clauses.append("tool = ?")
             params.append(tool)
+        if client_id:
+            clauses.append("client_id = ?")
+            params.append(client_id)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY created_at DESC, rowid DESC LIMIT ?"
         params.append(max(1, min(limit, 200)))
         with self._lock:
@@ -317,8 +340,9 @@ async def aget_task(task_id: str) -> dict[str, Any] | None:
     return await asyncio.to_thread(get_db().get_task, task_id)
 
 
-async def alist_tasks(limit: int = 20, tool: str | None = None) -> list[dict[str, Any]]:
-    return await asyncio.to_thread(lambda: get_db().list_tasks(limit, tool))
+async def alist_tasks(limit: int = 20, tool: str | None = None,
+                      client_id: str | None = None) -> list[dict[str, Any]]:
+    return await asyncio.to_thread(lambda: get_db().list_tasks(limit, tool, client_id))
 
 
 async def arecord_download(task_id: str, ip_address: str | None = None,

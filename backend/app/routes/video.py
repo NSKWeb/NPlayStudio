@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import ValidationError
 
 from ..schemas import (
@@ -13,7 +13,7 @@ from ..schemas import (
     VideoToGifForm,
 )
 from ..services.file_service import VIDEO_EXT
-from .common import submit_job
+from .common import client_id_from, submit_job
 
 router = APIRouter(prefix="/api/video", tags=["video"])
 
@@ -34,6 +34,7 @@ async def compress(
     codec: str = Form("h264"),
     format: str = Form("mp4"),
     audio_bitrate: str = Form("128k"),
+    x_client_id: str | None = Header(None),
 ):
     form = _validated(
         VideoCompressForm, quality=quality, crf=crf, resolution=resolution,
@@ -45,7 +46,10 @@ async def compress(
             detail=f"codec '{form.codec}' is not supported for {form.format}; "
                    f"use one of {VIDEO_CODECS[form.format]}",
         )
-    return await submit_job("video/compress", form.model_dump(), [file], VIDEO_EXT)
+    return await submit_job(
+        "video/compress", form.model_dump(), [file], VIDEO_EXT,
+        client_id_from(x_client_id),
+    )
 
 
 @router.post("/convert")
@@ -54,9 +58,13 @@ async def convert(
     format: str = Form("mp4"),
     codec: str | None = Form(None),
     resolution: str | None = Form(None),
+    x_client_id: str | None = Header(None),
 ):
     form = _validated(VideoConvertForm, format=format, codec=codec, resolution=resolution)
-    return await submit_job("video/convert", form.model_dump(), [file], VIDEO_EXT)
+    return await submit_job(
+        "video/convert", form.model_dump(), [file], VIDEO_EXT,
+        client_id_from(x_client_id),
+    )
 
 
 @router.post("/merge")
@@ -65,6 +73,7 @@ async def merge(
     format: str = Form("mp4"),
     reencode: bool = Form(False),
     resolution: str | None = Form(None),
+    x_client_id: str | None = Header(None),
 ):
     from ..config import get_settings
 
@@ -76,7 +85,10 @@ async def merge(
             detail=f"merge accepts at most {get_settings().max_merge_files} files",
         )
     form = _validated(VideoMergeForm, format=format, reencode=reencode, resolution=resolution)
-    return await submit_job("video/merge", form.model_dump(), files, VIDEO_EXT)
+    return await submit_job(
+        "video/merge", form.model_dump(), files, VIDEO_EXT,
+        client_id_from(x_client_id),
+    )
 
 
 @router.post("/to-gif")
@@ -86,6 +98,10 @@ async def to_gif(
     width: int = Form(480),
     duration: float | None = Form(None),
     start: float = Form(0),
+    x_client_id: str | None = Header(None),
 ):
     form = _validated(VideoToGifForm, fps=fps, width=width, duration=duration, start=start)
-    return await submit_job("video/to-gif", form.model_dump(), [file], VIDEO_EXT)
+    return await submit_job(
+        "video/to-gif", form.model_dump(), [file], VIDEO_EXT,
+        client_id_from(x_client_id),
+    )

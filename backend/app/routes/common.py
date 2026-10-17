@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,18 @@ from ..services import db_service, file_service
 from ..workers import tasks as worker_tasks
 
 _CHUNK = 1024 * 1024
+
+# Opaque per-browser identifier the frontend generates and stores in
+# localStorage. It carries no personal data; it exists only so the dashboard can
+# show a visitor their own jobs instead of every job on the server.
+_CLIENT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+def client_id_from(header: str | None) -> str | None:
+    """Return the caller's client id, or None when absent or malformed."""
+    if header and _CLIENT_ID.match(header):
+        return header
+    return None
 
 
 async def save_upload(upload: UploadFile, task_id: str, allowed_ext: set[str]) -> tuple[Path, int]:
@@ -51,7 +64,7 @@ async def save_upload(upload: UploadFile, task_id: str, allowed_ext: set[str]) -
 
 
 async def submit_job(tool: str, options: dict[str, Any], uploads: list[UploadFile],
-                     allowed_ext: set[str]) -> dict[str, Any]:
+                     allowed_ext: set[str], client_id: str | None = None) -> dict[str, Any]:
     """Persist uploads, record the task, and hand it to the worker."""
     task_id = file_service.new_task_id()
     saved: list[Path] = []
@@ -65,6 +78,7 @@ async def submit_job(tool: str, options: dict[str, Any], uploads: list[UploadFil
         task_id, tool, options,
         input_file=str(saved[0].relative_to(get_settings().upload_path)),
         input_size=total_size,
+        client_id=client_id,
     )
 
     payload = {"task_id": task_id, "tool": tool, "options": options,

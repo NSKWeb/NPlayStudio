@@ -17,6 +17,27 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  // Per-browser id so the dashboard can show this visitor their own jobs
+  // instead of every job on the server. Random, no personal data, and the only
+  // thing it is used for is scoping /api/history.
+  const CLIENT_KEY = "nplay.client";
+  const CLIENT_HEADER = "X-Client-Id";
+
+  function clientId() {
+    let id = localStorage.getItem(CLIENT_KEY);
+    if (!id) {
+      const bytes = new Uint8Array(16);
+      if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+      }
+      id = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      localStorage.setItem(CLIENT_KEY, id);
+    }
+    return id;
+  }
+
   function el(tag, attrs = {}, children = []) {
     const node = document.createElement(tag);
     for (const [key, value] of Object.entries(attrs)) {
@@ -158,9 +179,32 @@
   /* -------------------------------------------------------- cookie banner */
 
   const CONSENT_KEY = "nplay.consent";
+  const ADSENSE_CLIENT = "ca-pub-0000000000000000"; // set the real id when deploying
+
+  function adsAllowed() {
+    return localStorage.getItem(CONSENT_KEY) === "accepted";
+  }
+
+  // The AdSense loader is injected only after the visitor accepts, so the
+  // promise that "Essential only" avoids advertising cookies actually holds.
+  function loadAds() {
+    if (!adsAllowed()) return;
+    if (!ADSENSE_CLIENT || ADSENSE_CLIENT.includes("0000000000000000")) return;
+    if ($("script[data-adsense]")) return;
+    const script = document.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.adsense = "1";
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+    document.head.appendChild(script);
+  }
 
   function mountConsent() {
-    if (localStorage.getItem(CONSENT_KEY)) return;
+    const stored = localStorage.getItem(CONSENT_KEY);
+    if (stored) {
+      if (stored === "accepted") loadAds();
+      return;
+    }
     const banner = el("div", {
       class: "notice notice-info",
       style: "position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:60;max-width:640px;margin-inline:auto;box-shadow:var(--shadow)",
@@ -176,6 +220,7 @@
     ]);
     function decide(choice) {
       localStorage.setItem(CONSENT_KEY, choice);
+      if (choice === "accepted") loadAds();
       banner.remove();
     }
     document.body.appendChild(banner);
@@ -183,8 +228,10 @@
 
   /* ------------------------------------------------------- api interaction */
 
-  async function api(path, options) {
-    const response = await fetch(`${API}${path}`, options);
+  async function api(path, options = {}) {
+    const headers = new Headers(options.headers || {});
+    headers.set(CLIENT_HEADER, clientId());
+    const response = await fetch(`${API}${path}`, { ...options, headers });
     const type = response.headers.get("content-type") || "";
     const body = type.includes("application/json") ? await response.json() : null;
     if (!response.ok) {
@@ -421,7 +468,11 @@
         ]) : null,
       ]));
       this.result.appendChild(el("div", { style: "margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap" }, [
-        el("a", { class: "btn", href: `/api/file/${status.task_id}`, text: "⬇ Download" }),
+        el("a", {
+          class: "btn",
+          href: `/api/file/${status.task_id}?client=${encodeURIComponent(clientId())}`,
+          text: "⬇ Download",
+        }),
         el("button", {
           class: "btn-ghost", type: "button", text: "Process another",
           onclick: () => this.reset(),

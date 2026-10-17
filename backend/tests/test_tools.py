@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -13,20 +14,20 @@ from backend.app.config import get_settings
 POLL_LIMIT = 90  # seconds
 
 
-def _submit(client, endpoint: str, files, data=None):
+def _submit(client, endpoint: str, files, data=None, headers=None):
     payload = data or {}
-    response = client.post(endpoint, files=files, data=payload)
+    response = client.post(endpoint, files=files, data=payload, headers=headers)
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["status"] == "queued"
     return body["task_id"]
 
 
-def _wait(client, task_id: str) -> dict:
+def _wait(client, task_id: str, headers=None) -> dict:
     deadline = time.time() + POLL_LIMIT
     last = {}
     while time.time() < deadline:
-        response = client.get(f"/api/status/{task_id}")
+        response = client.get(f"/api/status/{task_id}", headers=headers)
         assert response.status_code == 200, response.text
         last = response.json()
         if last["status"] in ("done", "failed"):
@@ -467,20 +468,110 @@ def test_stats_reflect_completed_jobs(client, sample_png):
     assert after["by_tool"].get("image/compress", 0) >= 1
 
 
-def test_history_lists_tasks_and_downloads(client, sample_png):
+def test_history_is_scoped_to_the_caller(client, sample_png):
+    mine = "a" * 32
+    theirs = "b" * 32
     with sample_png.open("rb") as handle:
         task_id = _submit(
             client, "/api/image/convert",
             {"file": (sample_png.name, handle, "image/png")},
             {"format": "webp"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+    client.get(f"/api/file/{task_id}", headers={"X-Client-Id": mine})
+
+    body = client.get("/api/history?limit=5", headers={"X-Client-Id": mine}).json()
+    assert any(t["task_id"] == task_id for t in body["tasks"])
+    assert body["tasks"][0]["tool"].startswith("image/")
+
+    other = client.get("/api/history?limit=5", headers={"X-Client-Id": theirs}).json()
+    assert all(t["task_id"] != task_id for t in other["tasks"])
+
+
+def test_download_is_scoped_to_the_owning_browser(client, sample_png):
+    mine = "e" * 32
+    theirs = "f" * 32
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "webp"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+
+    # The owner can download, via the header or the query parameter the link uses.
+    assert client.get(f"/api/file/{task_id}", headers={"X-Client-Id": mine}).status_code == 200
+    assert client.get(f"/api/file/{task_id}?client={mine}").status_code == 200
+
+    # Anyone else — including a guesser with the right id — is refused.
+    assert client.get(f"/api/file/{task_id}").status_code == 403
+    assert client.get(f"/api/file/{task_id}", headers={"X-Client-Id": theirs}).status_code == 403
+    assert client.get(f"/api/file/{task_id}?client={theirs}").status_code == 403
+
+
+def test_download_without_an_owner_stays_open(client, sample_png):
+    """Jobs queued straight to the API (no client id) have no owner to check."""
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "png"},
         )
     assert _wait(client, task_id)["status"] == "done"
-    client.get(f"/api/file/{task_id}")
+    assert client.get(f"/api/file/{task_id}").status_code == 200
 
-    body = client.get("/api/history?limit=5").json()
-    assert any(t["task_id"] == task_id for t in body["tasks"])
-    assert any(d["task_id"] == task_id for d in body["downloads"])
-    assert body["tasks"][0]["tool"].startswith("image/")
+
+def test_history_never_exposes_ip_or_user_agent(client, sample_png):
+    mine = "c" * 32
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "png"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+    client.get(f"/api/file/{task_id}", headers={"X-Client-Id": mine})
+
+    body = client.get("/api/history?limit=5", headers={"X-Client-Id": mine}).json()
+    assert "downloads" not in body
+    assert "ip_address" not in json.dumps(body)
+    assert "user_agent" not in json.dumps(body)
+
+
+def test_history_without_client_id_returns_nothing(client, sample_png):
+    mine = "d" * 32
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "png"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+
+    anonymous = client.get("/api/history?limit=5").json()
+    assert anonymous["tasks"] == []
+
+
+def test_status_is_scoped_to_the_owning_browser(client, sample_png):
+    mine = "3" * 32
+    theirs = "4" * 32
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "png"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+
+    assert client.get(f"/api/status/{task_id}").status_code == 403
+    assert client.get(f"/api/status/{task_id}",
+                      headers={"X-Client-Id": theirs}).status_code == 403
+    assert client.get(f"/api/status/{task_id}?client={mine}").status_code == 200
 
 
 def test_delete_task_removes_files(client, sample_png):
@@ -493,3 +584,27 @@ def test_delete_task_removes_files(client, sample_png):
     assert _wait(client, task_id)["status"] == "done"
     assert client.delete(f"/api/task/{task_id}").status_code == 200
     assert client.get(f"/api/status/{task_id}").status_code == 404
+
+
+def test_delete_is_scoped_to_the_owning_browser(client, sample_png):
+    mine = "1" * 32
+    theirs = "2" * 32
+    with sample_png.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/image/convert",
+            {"file": (sample_png.name, handle, "image/png")},
+            {"format": "png"},
+            headers={"X-Client-Id": mine},
+        )
+    assert _wait(client, task_id, headers={"X-Client-Id": mine})["status"] == "done"
+
+    assert client.delete(f"/api/task/{task_id}").status_code == 403
+    assert client.delete(f"/api/task/{task_id}",
+                         headers={"X-Client-Id": theirs}).status_code == 403
+    assert client.get(f"/api/status/{task_id}",
+                      headers={"X-Client-Id": mine}).status_code == 200
+
+    assert client.delete(f"/api/task/{task_id}",
+                         headers={"X-Client-Id": mine}).status_code == 200
+    assert client.get(f"/api/status/{task_id}",
+                      headers={"X-Client-Id": mine}).status_code == 404
