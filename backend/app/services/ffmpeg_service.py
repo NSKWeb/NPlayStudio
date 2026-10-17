@@ -118,10 +118,15 @@ async def run_ffmpeg(
 
 
 def _scale_filter(resolution: str | None) -> list[str]:
+    """Video filter that guarantees even output dimensions.
+
+    H.264 and H.265 reject odd width or height, so an odd-sized source fails
+    the encode unless it is normalised. Without an explicit resolution the
+    source dimensions are kept, only rounded down to even.
+    """
     if not resolution:
-        return []
+        return ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"]
     width, _, height = resolution.partition("x")
-    # Round odd dimensions down: H.264/H.265 reject odd width or height.
     even_width = max(2, int(width) - int(width) % 2)
     even_height = max(2, int(height) - int(height) % 2)
     return ["-vf", f"scale={even_width}:{even_height}"]

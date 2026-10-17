@@ -187,7 +187,12 @@ def test_crf_presets_ordering():
 
 
 def test_scale_filter_uses_even_dimensions():
-    assert ffmpeg_service._scale_filter(None) == []
+    # No resolution: keep the source size but force even dimensions, because
+    # libx264 rejects odd ones. An odd source with no explicit resolution is
+    # the common case and used to reach the encoder untouched.
+    assert ffmpeg_service._scale_filter(None) == [
+        "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"
+    ]
     assert ffmpeg_service._scale_filter("1280x720") == ["-vf", "scale=1280:720"]
     # Odd dimensions are rounded down; libx264 rejects them outright.
     assert ffmpeg_service._scale_filter("641x361") == ["-vf", "scale=640:360"]

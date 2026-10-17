@@ -109,6 +109,22 @@ def video_only_mp4(tmp_root) -> Path:
 
 
 @pytest.fixture(scope="session")
+def odd_mp4(tmp_root) -> Path:
+    """A 2s clip with odd dimensions (641x361).
+
+    Encoded with mpeg4 because libx264 itself refuses odd width/height, so the
+    fixture cannot use it to create the file that triggers the bug.
+    """
+    path = tmp_root / "odd.mp4"
+    if not path.exists():
+        _ffmpeg([
+            "-f", "lavfi", "-i", "testsrc=size=641x361:rate=25:duration=2",
+            "-c:v", "mpeg4", "-q:v", "3", str(path),
+        ])
+    return path
+
+
+@pytest.fixture(scope="session")
 def sample_mp3(tmp_root) -> Path:
     path = tmp_root / "sample.mp3"
     if not path.exists():

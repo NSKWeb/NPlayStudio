@@ -171,6 +171,34 @@ def test_video_merge_reencode_both_silent(client, video_only_mp4, second_mp4):
         )
 
 
+def test_video_compress_odd_source_without_resolution(client, odd_mp4):
+    """An odd-sized source with no explicit resolution must still encode.
+
+    Regression: libx264 refuses odd width/height, and without a resolution the
+    source dimensions used to reach the encoder untouched, so a 641x361 clip
+    failed with "width not divisible by 2". The fix rounds every video to even
+    dimensions even when no resize was requested.
+    """
+    with odd_mp4.open("rb") as handle:
+        _run(
+            client, "/api/video/compress",
+            {"file": (odd_mp4.name, handle, "video/mp4")},
+            {"quality": "small", "format": "mp4", "codec": "h264"},
+            container="mp4",
+        )
+
+
+def test_video_convert_odd_source_without_resolution(client, odd_mp4):
+    """Same regression on the convert path, which also uses libx264 by default."""
+    with odd_mp4.open("rb") as handle:
+        _run(
+            client, "/api/video/convert",
+            {"file": (odd_mp4.name, handle, "video/mp4")},
+            {"format": "mp4", "codec": "h264"},
+            container="mp4",
+        )
+
+
 def test_video_to_gif(client, sample_mp4):
     with sample_mp4.open("rb") as handle:
         _run(
