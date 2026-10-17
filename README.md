@@ -142,41 +142,76 @@ covers the SQLite layer and the service helpers directly.
 
 ## Deployment (VPS)
 
+The quick path, on a fresh Debian/Ubuntu box:
+
+```bash
+sudo ./scripts/vps-bootstrap.sh nplaystudio.com you@example.com
+```
+
+That installs Docker, nginx and certbot, clones the repo to `/srv/nplaystudio`,
+builds and starts the compose stack, puts nginx in front, and issues a
+Let's Encrypt certificate. It is idempotent, so re-running it re-deploys. The
+email argument is optional and only used for certbot expiry notices.
+
+The manual equivalent:
+
 1. **Harden the VPS.** Create a non-root user, disable password SSH login, and
    enable a firewall allowing only 22, 80 and 443.
 2. **Install Docker** and the Compose plugin.
 3. **Clone and configure.**
    ```bash
-   git clone <repo> /srv/nplaystudio && cd /srv/nplaystudio
+   git clone https://github.com/NSKWeb/NPlayStudio.git /srv/nplaystudio
+   cd /srv/nplaystudio
    cp backend/.env.example backend/.env   # edit it
    ```
 4. **Start the stack.**
    ```bash
    docker compose up -d --build
    ```
-5. **Put Nginx in front.** Copy `nginx/nginx.conf` to
-   `/etc/nginx/sites-available/nplaystudio`, edit `server_name` and the
-   certificate paths, then enable it and reload. On the first run, comment out
-   the HTTP→HTTPS redirect block so the ACME challenge can complete.
+5. **Put Nginx in front.** On the first run the TLS server block cannot load
+   before a certificate exists, so install the HTTP-only config first:
+   ```bash
+   sudo sed 's/nplaystudio\.example\.com/yourdomain.com/g' \
+       nginx/nplaystudio.pre-certbot.conf > /etc/nginx/sites-available/nplaystudio
+   sudo ln -sf /etc/nginx/sites-available/nplaystudio /etc/nginx/sites-enabled/
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
 6. **Get a certificate.**
    ```bash
-   sudo certbot --nginx -d nplaystudio.example.com
+   sudo certbot --nginx -d yourdomain.com --redirect
    ```
-7. **Verify and back up.**
+7. **Swap in the hardened config** (gzip, security headers, long proxy
+   timeouts, `/docs` proxy) and reload:
    ```bash
-   curl -fsS https://nplaystudio.example.com/health
+   sudo sed 's/nplaystudio\.example\.com/yourdomain.com/g' \
+       nginx/nginx.conf > /etc/nginx/sites-available/nplaystudio
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+8. **Verify and back up.**
+   ```bash
+   curl -fsS https://yourdomain.com/health
    # nightly SQLite backup
    sqlite3 backend/data/nplaystudio.db ".backup '/var/backups/nplaystudio-$(date +%F).db'"
    ```
 
 `.github/workflows/deploy.yml` automates steps 3–4 on every push to `main`,
 gated on the test suite. It expects the secrets `VPS_HOST`, `VPS_USER`,
-`VPS_SSH_KEY`, `VPS_PORT` and `VPS_APP_DIR`.
+`VPS_SSH_KEY`, `VPS_PORT` and `VPS_APP_DIR`; until `VPS_HOST` is set the deploy
+job is skipped rather than failed.
 
 ### Before going live
 
-- Replace `nplaystudio.example.com` in `frontend/robots.txt`,
-  `frontend/sitemap.xml` and the legal pages' contact addresses.
+Run the domain replacer, which rewrites the hostname in nginx, robots, the
+sitemap and the legal pages, and derives `support@`, `dmca@` and `privacy@`
+from the domain:
+
+```bash
+./scripts/configure-domain.sh nplaystudio.com            # role addresses
+./scripts/configure-domain.sh nplaystudio.com you@mail.com  # one shared address
+```
+
+Then:
+
 - Set your real AdSense publisher ID in `frontend/index.html` (currently
   `ca-pub-0000000000000000`).
 - Serve over HTTPS only — the cookie banner and AdSense both expect it.
@@ -196,6 +231,8 @@ backend/app/
 backend/tests/       end-to-end and unit tests
 frontend/            dashboard, 9 tool pages, legal pages, assets
 nginx/nginx.conf     reverse proxy template
+nginx/nplaystudio.pre-certbot.conf  HTTP-only config for the first certbot run
+scripts/             configure-domain.sh, vps-bootstrap.sh
 Dockerfile           shared image for the API and the worker
 docker-compose.yml   redis + api + worker
 ```

@@ -110,3 +110,18 @@ over SSH. The deploy step checks for `VPS_HOST` first, so it is skipped with a
 notice until the `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (and optional
 `VPS_PORT`, `VPS_APP_DIR`) secrets are set. Pushing this file needs a token
 with the `workflow` scope; a `repo`-only token is rejected by GitHub.
+
+## Deployment helpers
+
+- `scripts/configure-domain.sh <domain> [email]` rewrites the
+  `nplaystudio.example.com` placeholder across nginx, robots.txt, sitemap.xml
+  and the legal pages. Without an email it derives `support@`, `dmca@` and
+  `privacy@` from the domain; with one it points all three at that address.
+- `scripts/vps-bootstrap.sh <domain> [email]` does a full first-time VPS setup
+  (Docker + nginx + certbot, clone, compose up, certificate). It is idempotent.
+- The first certbot run needs `nginx/nplaystudio.pre-certbot.conf`: the main
+  `nginx/nginx.conf` references `ssl_certificate` paths that do not exist yet,
+  so nginx refuses to start and certbot has nothing to rewrite. Bootstrap
+  installs the HTTP-only config, runs certbot, then swaps in the hardened one.
+- The frontend is served by nginx from `/srv/nplaystudio/frontend`, not by the
+  container. The API binds `127.0.0.1:8000` only.
