@@ -100,3 +100,13 @@ Quick manual probe pattern (no test suite needed): set the `NPLAY_*` env vars to
 a temp dir, import `create_app`, drive it with `TestClient`, and poll
 `/api/status/{id}`. `NPLAY_INLINE_WORKER=true` runs jobs in-process, so Redis is
 not required.
+
+## CI
+
+`.github/workflows/deploy.yml` runs on every push to `main`: a `test` job
+installs ffmpeg + `backend/requirements.txt` on Python 3.12 and runs
+`pytest backend/tests -q`, then a `deploy` job rebuilds the stack on the VPS
+over SSH. The deploy step checks for `VPS_HOST` first, so it is skipped with a
+notice until the `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (and optional
+`VPS_PORT`, `VPS_APP_DIR`) secrets are set. Pushing this file needs a token
+with the `workflow` scope; a `repo`-only token is rejected by GitHub.
