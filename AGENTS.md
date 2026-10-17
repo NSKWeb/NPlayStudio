@@ -125,3 +125,8 @@ with the `workflow` scope; a `repo`-only token is rejected by GitHub.
   installs the HTTP-only config, runs certbot, then swaps in the hardened one.
 - The frontend is served by nginx from `/srv/nplaystudio/frontend`, not by the
   container. The API binds `127.0.0.1:8000` only.
+- `scripts/smoke-test.sh <domain> [--local]` verifies a live deployment end to
+  end (DNS, cert, redirect, static pages, `/docs`, security headers, and a real
+  upload → worker → download). `--local` skips DNS/cert and targets
+  `127.0.0.1` with `-k`. Both configs were validated with `nginx -t` inside
+  `nginx:1.26-alpine` with a self-signed cert.

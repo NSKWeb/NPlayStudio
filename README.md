@@ -180,19 +180,18 @@ The manual equivalent:
    ```bash
    sudo certbot --nginx -d yourdomain.com --redirect
    ```
-7. **Swap in the hardened config** (gzip, security headers, long proxy
-   timeouts, `/docs` proxy) and reload:
-   ```bash
-   sudo sed 's/nplaystudio\.example\.com/yourdomain.com/g' \
-       nginx/nginx.conf > /etc/nginx/sites-available/nplaystudio
-   sudo nginx -t && sudo systemctl reload nginx
-   ```
 8. **Verify and back up.**
    ```bash
-   curl -fsS https://yourdomain.com/health
+   ./scripts/smoke-test.sh yourdomain.com
    # nightly SQLite backup
    sqlite3 backend/data/nplaystudio.db ".backup '/var/backups/nplaystudio-$(date +%F).db'"
    ```
+
+`scripts/smoke-test.sh <domain>` checks DNS, the certificate, the HTTP→HTTPS
+redirect, every static page, the `/docs` proxy, the security headers, and a real
+media job (upload → worker → download a valid MP4) through nginx. Pass `--local`
+to test the nginx layer against `127.0.0.1` before DNS is live. It exits non-zero
+on the first failure it finds.
 
 `.github/workflows/deploy.yml` automates steps 3–4 on every push to `main`,
 gated on the test suite. It expects the secrets `VPS_HOST`, `VPS_USER`,
@@ -232,7 +231,7 @@ backend/tests/       end-to-end and unit tests
 frontend/            dashboard, 9 tool pages, legal pages, assets
 nginx/nginx.conf     reverse proxy template
 nginx/nplaystudio.pre-certbot.conf  HTTP-only config for the first certbot run
-scripts/             configure-domain.sh, vps-bootstrap.sh
+scripts/             configure-domain.sh, vps-bootstrap.sh, smoke-test.sh
 Dockerfile           shared image for the API and the worker
 docker-compose.yml   redis + api + worker
 ```
