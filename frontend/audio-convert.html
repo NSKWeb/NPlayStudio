@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audio Convert — MP3, M4A, WAV, FLAC, OPUS, AAC, OGG | NPlayStudio</title>
+<meta name="description" content="Convert audio files between MP3, M4A, WAV, FLAC, OPUS, AAC and OGG online for free. Choose bitrate and sample rate.">
+<link rel="canonical" href="/audio-convert.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="breadcrumb"><a href="/">Dashboard</a> / Audio Convert</p>
+  <h1>Audio Convert</h1>
+  <p>Transcode audio between seven formats. Lossless targets (WAV, FLAC) preserve
+     every detail; lossy targets trade size for quality via the bitrate.</p>
+
+  <div class="card" data-tool data-endpoint="/api/audio/convert">
+    <div class="dropzone" data-dropzone tabindex="0" role="button" aria-label="Upload an audio file">
+      <strong>Drop an audio or video file here</strong>
+      <span>MP3, M4A, WAV, FLAC, OPUS, AAC, OGG, WMA — or any video</span>
+    </div>
+    <input type="file" accept="audio/*,video/*,.mkv,.m4a,.flac,.opus,.ogg,.wma" hidden>
+    <ul class="file-list" data-file-list></ul>
+
+    <form>
+      <div class="row">
+        <div class="field">
+          <label for="format">Convert to</label>
+          <select id="format" name="format">
+            <option value="mp3" selected>MP3</option>
+            <option value="m4a">M4A (AAC)</option>
+            <option value="wav">WAV (lossless)</option>
+            <option value="flac">FLAC (lossless)</option>
+            <option value="opus">OPUS</option>
+            <option value="aac">AAC</option>
+            <option value="ogg">OGG (Vorbis)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bitrate">Bitrate</label>
+          <select id="bitrate" name="bitrate">
+            <option value="128k">128 kbps</option>
+            <option value="192k" selected>192 kbps</option>
+            <option value="256k">256 kbps</option>
+            <option value="320k">320 kbps</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sample_rate">Sample rate</label>
+          <select id="sample_rate" name="sample_rate">
+            <option value="" selected>Keep original</option>
+            <option value="44100">44.1 kHz</option>
+            <option value="48000">48 kHz</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" data-submit disabled>Convert audio</button>
+    </form>
+
+    <div class="progress-wrap" data-progress-wrap hidden>
+      <div class="progress-track"><div class="progress-bar" data-progress-bar></div></div>
+      <div class="progress-meta">
+        <span class="status-pill" data-status-pill data-status="queued">queued</span>
+        <span data-progress-pct>0%</span>
+      </div>
+    </div>
+    <div class="notice" data-notice hidden></div>
+    <div data-result hidden></div>
+  </div>
+</main>
+</body>
+</html>

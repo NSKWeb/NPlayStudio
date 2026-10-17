@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact Us | NPlayStudio</title>
+<meta name="description" content="Get in touch with the NPlayStudio team about bugs, features or legal matters.">
+<link rel="canonical" href="/contact.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <div class="prose">
+    <p class="breadcrumb"><a href="/">Dashboard</a> / Contact Us</p>
+    <h1>Contact Us</h1>
+    <p class="updated">Last updated: 2026-10-17</p>
+<p>We read every message. Pick the address that fits best, or use the form below.</p>
+
+    <h2>Direct email</h2>
+    <ul>
+      <li><strong>General &amp; support:</strong> <a href="mailto:support@nplaystudio.example.com">support@nplaystudio.example.com</a></li>
+      <li><strong>Abuse &amp; DMCA:</strong> <a href="mailto:dmca@nplaystudio.example.com">dmca@nplaystudio.example.com</a></li>
+      <li><strong>Privacy &amp; data requests:</strong> <a href="mailto:privacy@nplaystudio.example.com">privacy@nplaystudio.example.com</a></li>
+    </ul>
+
+    <h2>Send a message</h2>
+    <p>The form below opens your own email client with the message pre-filled. We do not store form
+    submissions on our servers.</p>
+
+    <form id="contact-form" class="card" style="max-width:640px">
+      <div class="row">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="email">Your email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="topic">Topic</label>
+        <select id="topic" name="topic">
+          <option>Bug report</option>
+          <option>Feature request</option>
+          <option>Copyright / DMCA</option>
+          <option>Privacy request</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="6" required></textarea>
+      </div>
+      <button type="submit">Open email draft</button>
+      <p class="hint" id="contact-status" role="status"></p>
+    </form>
+
+    <h2>Response time</h2>
+    <p>Support and privacy requests are answered within 30 days, usually much sooner. DMCA notices are
+    actioned on receipt.</p>
+
+    <script>
+      document.getElementById("contact-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var name = document.getElementById("name").value.trim();
+        var email = document.getElementById("email").value.trim();
+        var topic = document.getElementById("topic").value;
+        var message = document.getElementById("message").value.trim();
+        var subject = encodeURIComponent("[NPlayStudio] " + topic + " from " + name);
+        var body = encodeURIComponent(message + "\n\n—\n" + name + "\n" + email);
+        window.location.href = "mailto:support@nplaystudio.example.com?subject=" + subject + "&body=" + body;
+        document.getElementById("contact-status").textContent = "Opening your email client…";
+      });
+    </script>
+  </div>
+</main>
+</body>
+</html>

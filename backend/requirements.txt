@@ -1,0 +1,11 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+arq>=0.26
+redis>=5.2
+pillow>=11.0
+python-multipart>=0.0.20
+aiofiles>=24.1
+pydantic-settings>=2.7
+httpx>=0.28
+pytest>=8.3
+pytest-asyncio>=0.25

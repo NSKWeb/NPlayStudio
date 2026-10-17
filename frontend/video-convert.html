@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Convert — MP4, MKV, WebM, AVI, MOV | NPlayStudio</title>
+<meta name="description" content="Convert videos between MP4, MKV, WebM, AVI and MOV online for free. Optional resolution change and codec selection.">
+<link rel="canonical" href="/video-convert.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="breadcrumb"><a href="/">Dashboard</a> / Video Convert</p>
+  <h1>Video Convert</h1>
+  <p>Move a video between containers. The codec is chosen to match the target container,
+     and you can downscale at the same time.</p>
+
+  <div class="card" data-tool data-endpoint="/api/video/convert">
+    <div class="dropzone" data-dropzone tabindex="0" role="button" aria-label="Upload a video">
+      <strong>Drop a video here, or click to browse</strong>
+      <span>MP4, MKV, WebM, AVI, MOV, M4V, WMV, FLV — up to 512 MB</span>
+    </div>
+    <input type="file" accept="video/*,.mkv,.avi,.mov,.m4v,.wmv,.flv" hidden>
+    <ul class="file-list" data-file-list></ul>
+    <video class="preview" data-preview controls muted hidden></video>
+
+    <form>
+      <div class="row">
+        <div class="field">
+          <label for="format">Convert to</label>
+          <select id="format" name="format">
+            <option value="mp4" selected>MP4 (H.264 + AAC)</option>
+            <option value="mkv">MKV</option>
+            <option value="webm">WebM (VP9 + Opus)</option>
+            <option value="avi">AVI</option>
+            <option value="mov">MOV</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="codec">Video codec (optional)</label>
+          <select id="codec" name="codec">
+            <option value="" selected>Auto — best for container</option>
+            <option value="h264">H.264</option>
+            <option value="h265">H.265 / HEVC</option>
+            <option value="vp9">VP9</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="resolution">Resolution</label>
+          <select id="resolution" name="resolution">
+            <option value="" selected>Keep original</option>
+            <option value="1920x1080">1080p</option>
+            <option value="1280x720">720p</option>
+            <option value="854x480">480p</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" data-submit disabled>Convert video</button>
+    </form>
+
+    <div class="progress-wrap" data-progress-wrap hidden>
+      <div class="progress-track"><div class="progress-bar" data-progress-bar></div></div>
+      <div class="progress-meta">
+        <span class="status-pill" data-status-pill data-status="queued">queued</span>
+        <span data-progress-pct>0%</span>
+      </div>
+    </div>
+    <div class="notice" data-notice hidden></div>
+    <div data-result hidden></div>
+  </div>
+</main>
+</body>
+</html>

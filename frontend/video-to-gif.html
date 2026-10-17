@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video to GIF — Make Optimised GIFs | NPlayStudio</title>
+<meta name="description" content="Turn any video clip into a high-quality GIF online for free. Control FPS, width, start time and clip length with palette optimisation.">
+<link rel="canonical" href="/video-to-gif.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="breadcrumb"><a href="/">Dashboard</a> / Video to GIF</p>
+  <h1>Video to GIF</h1>
+  <p>Create a looping GIF from any clip. A generated colour palette keeps the result
+     crisp at a fraction of the usual file size.</p>
+
+  <div class="card" data-tool data-endpoint="/api/video/to-gif">
+    <div class="dropzone" data-dropzone tabindex="0" role="button" aria-label="Upload a video">
+      <strong>Drop a video here, or click to browse</strong>
+      <span>MP4, MKV, WebM, AVI, MOV, M4V — up to 512 MB</span>
+    </div>
+    <input type="file" accept="video/*,.mkv,.avi,.mov,.m4v" hidden>
+    <ul class="file-list" data-file-list></ul>
+    <video class="preview" data-preview controls muted hidden></video>
+
+    <form>
+      <div class="row">
+        <div class="field">
+          <label for="fps">Frames per second</label>
+          <input type="number" id="fps" name="fps" min="1" max="50" value="10">
+          <p class="hint">10–15 fps is the sweet spot for size.</p>
+        </div>
+        <div class="field">
+          <label for="width">Width (px)</label>
+          <input type="number" id="width" name="width" min="64" max="1920" value="480">
+          <p class="hint">Height scales automatically to keep the aspect ratio.</p>
+        </div>
+        <div class="field">
+          <label for="start">Start at (seconds)</label>
+          <input type="number" id="start" name="start" min="0" step="0.1" value="0">
+        </div>
+        <div class="field">
+          <label for="duration">Clip length (seconds)</label>
+          <input type="number" id="duration" name="duration" min="0.1" step="0.1" placeholder="Whole video">
+        </div>
+      </div>
+      <button type="submit" data-submit disabled>Create GIF</button>
+    </form>
+
+    <div class="progress-wrap" data-progress-wrap hidden>
+      <div class="progress-track"><div class="progress-bar" data-progress-bar></div></div>
+      <div class="progress-meta">
+        <span class="status-pill" data-status-pill data-status="queued">queued</span>
+        <span data-progress-pct>0%</span>
+      </div>
+    </div>
+    <div class="notice" data-notice hidden></div>
+    <div data-result hidden></div>
+  </div>
+</main>
+</body>
+</html>

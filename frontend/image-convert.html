@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image Convert — JPG, PNG, WebP, GIF, BMP, TIFF | NPlayStudio</title>
+<meta name="description" content="Convert images between JPG, PNG, WebP, GIF, BMP and TIFF online for free. Choose the output quality for lossy formats.">
+<link rel="canonical" href="/image-convert.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="breadcrumb"><a href="/">Dashboard</a> / Image Convert</p>
+  <h1>Image Convert</h1>
+  <p>Switch between six image formats. Transparency is preserved for PNG, WebP, GIF and TIFF;
+     JPG output is flattened onto white.</p>
+
+  <div class="card" data-tool data-endpoint="/api/image/convert">
+    <div class="dropzone" data-dropzone tabindex="0" role="button" aria-label="Upload an image">
+      <strong>Drop an image here, or click to browse</strong>
+      <span>JPG, PNG, WebP, GIF, BMP, TIFF — up to 512 MB</span>
+    </div>
+    <input type="file" accept="image/*" hidden>
+    <ul class="file-list" data-file-list></ul>
+    <img class="preview" data-preview alt="Selected image preview" hidden>
+    <p class="hint" data-dims></p>
+
+    <form>
+      <div class="row">
+        <div class="field">
+          <label for="format">Convert to</label>
+          <select id="format" name="format">
+            <option value="webp" selected>WebP</option>
+            <option value="jpg">JPG</option>
+            <option value="png">PNG</option>
+            <option value="gif">GIF</option>
+            <option value="bmp">BMP</option>
+            <option value="tiff">TIFF</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="quality">Quality — <span data-quality-out>85</span></label>
+          <input type="range" id="quality" name="quality" min="1" max="100" value="85"
+                 oninput="document.querySelector('[data-quality-out]').textContent = this.value">
+          <p class="hint">Used by JPG and WebP only.</p>
+        </div>
+      </div>
+      <button type="submit" data-submit disabled>Convert image</button>
+    </form>
+
+    <div class="progress-wrap" data-progress-wrap hidden>
+      <div class="progress-track"><div class="progress-bar" data-progress-bar></div></div>
+      <div class="progress-meta">
+        <span class="status-pill" data-status-pill data-status="queued">queued</span>
+        <span data-progress-pct>0%</span>
+      </div>
+    </div>
+    <div class="notice" data-notice hidden></div>
+    <div data-result hidden></div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frequently Asked Questions | NPlayStudio</title>
+<meta name="description" content="Answers about file limits, privacy, formats, quality and how NPlayStudio works.">
+<link rel="canonical" href="/faq.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <div class="prose">
+    <p class="breadcrumb"><a href="/">Dashboard</a> / Frequently Asked Questions</p>
+    <h1>Frequently Asked Questions</h1>
+    <p class="updated">Last updated: 2026-10-17</p>
+<h2>Is NPlayStudio really free?</h2>
+    <p>Yes. Every tool is free with no account, no watermark and no payment wall. The server is paid for
+    by advertising.</p>
+
+    <h2>What is the maximum file size?</h2>
+    <p>512 MB per upload by default. Merge accepts up to 10 files. The limit is configurable by whoever
+    runs the instance.</p>
+
+    <h2>How long are my files kept?</h2>
+    <p>One hour after the task is created. A background job then deletes both the upload and the output.
+    Download what you need before then.</p>
+
+    <h2>Do you look at my files?</h2>
+    <p>No. Files are processed by FFmpeg or Pillow and are never opened, shared or sold. Only anonymous
+    metadata (tool used, status, byte sizes) is stored, to power the statistics on the dashboard.</p>
+
+    <h2>Which video formats are supported?</h2>
+    <p>Input: MP4, MKV, WebM, AVI, MOV, M4V, WMV, FLV, MPEG. Output: MP4, MKV, WebM, AVI, MOV.
+    Codecs available are H.264, H.265 and VP9, with AAC, Opus, MP3 or Vorbis audio depending on the
+    container.</p>
+
+    <h2>Which audio formats are supported?</h2>
+    <p>MP3, M4A, WAV, FLAC, OPUS, AAC, OGG and WMA. You can also extract audio from a video file.</p>
+
+    <h2>Which image formats are supported?</h2>
+    <p>JPG, PNG, WebP, GIF, BMP and TIFF, for compression, conversion and cropping.</p>
+
+    <h2>How do I get the smallest video?</h2>
+    <p>Pick the <em>Small</em> preset, or set a CRF around 28–32, and drop the resolution one step. VP9 in
+    WebM usually beats H.264 on size, but takes longer to encode.</p>
+
+    <h2>Why is my WebM output bigger than expected?</h2>
+    <p>VP9 encoding is CPU-heavy and uses a longer analysis window. Give it a slightly higher CRF, or use
+    H.264 in MP4 if size matters more than codec modernity.</p>
+
+    <h2>Can I merge clips with different resolutions?</h2>
+    <p>Yes, but they must be re-encoded. Tick "Force re-encode" and optionally choose a normalise
+    resolution. Stream-copy merging only works when every input shares codecs and parameters.</p>
+
+    <h2>Does cropping preserve transparency?</h2>
+    <p>Yes, for PNG, WebP, GIF and TIFF. JPG has no alpha channel, so transparency is flattened.</p>
+
+    <h2>Why did my job fail?</h2>
+    <p>Usually a corrupt or unsupported source file, or a mismatch between codec and container. The error
+    message on the tool page names the specific problem.</p>
+
+    <h2>Can I use this commercially?</h2>
+    <p>Yes, for files you have the rights to. See the <a href="/terms.html">Terms &amp; Conditions</a>.</p>
+
+    <h2>Do you have an API?</h2>
+    <p>The web app uses a documented REST API — interactive docs are served at <code>/docs</code>.
+    Automated bulk use requires prior agreement; see fair use in the terms.</p>
+
+    <h2>Something is broken or missing</h2>
+    <p>Tell us via the <a href="/contact.html">contact page</a>.</p>
+  </div>
+</main>
+</body>
+</html>

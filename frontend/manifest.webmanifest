@@ -1,0 +1,12 @@
+{
+  "name": "NPlayStudio — Create. Convert. Compress.",
+  "short_name": "NPlayStudio",
+  "description": "Free online toolkit to compress, convert, merge and extract video, audio and images.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#4f7cff",
+  "icons": [
+    { "src": "/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

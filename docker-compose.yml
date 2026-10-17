@@ -1,0 +1,57 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - backend/.env
+    environment:
+      NPLAY_REDIS_URL: redis://redis:6379/0
+    volumes:
+      - uploads:/srv/nplaystudio/uploads
+      - outputs:/srv/nplaystudio/outputs
+      - db-data:/srv/nplaystudio/backend/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - backend/.env
+    environment:
+      NPLAY_REDIS_URL: redis://redis:6379/0
+    command: ["arq", "backend.app.workers.tasks.WorkerSettings"]
+    volumes:
+      - uploads:/srv/nplaystudio/uploads
+      - outputs:/srv/nplaystudio/outputs
+      - db-data:/srv/nplaystudio/backend/data
+
+volumes:
+  redis-data:
+  uploads:
+  outputs:
+  db-data:

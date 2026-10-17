@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GDPR Compliance | NPlayStudio</title>
+<meta name="description" content="How NPlayStudio meets GDPR obligations for users in the European Economic Area.">
+<link rel="canonical" href="/gdpr.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <div class="prose">
+    <p class="breadcrumb"><a href="/">Dashboard</a> / GDPR Compliance</p>
+    <h1>GDPR Compliance</h1>
+    <p class="updated">Last updated: 2026-10-17</p>
+<p>This page summarises how we handle personal data for visitors in the EEA, UK and Switzerland.</p>
+
+    <h2>Who is the controller</h2>
+    <p>The operator of nplaystudio.example.com is the data controller. Contact:
+    <a href="mailto:privacy@nplaystudio.example.com">privacy@nplaystudio.example.com</a>.</p>
+
+    <h2>What we process, and on what basis</h2>
+    <table>
+      <thead><tr><th>Data</th><th>Purpose</th><th>Legal basis</th><th>Retention</th></tr></thead>
+      <tbody>
+        <tr><td>Uploaded files</td><td>Run your requested conversion</td><td>Contract (you asked for it)</td><td>1 hour, then deleted</td></tr>
+        <tr><td>Task metadata (tool, status, byte sizes)</td><td>Statistics, abuse prevention</td><td>Legitimate interest</td><td>Until purged by the operator</td></tr>
+        <tr><td>IP address and user agent</td><td>Security, rate limiting, download accounting</td><td>Legitimate interest</td><td>Server log rotation window</td></tr>
+        <tr><td>Advertising identifiers</td><td>Serve and measure ads</td><td>Consent</td><td>Set by Google's policies</td></tr>
+      </tbody>
+    </table>
+
+    <h2>International transfers</h2>
+    <p>Advertising is delivered by Google, which may process data outside the EEA under the EU–US Data
+    Privacy Framework and standard contractual clauses. See Google's own documentation for details.</p>
+
+    <h2>Your rights</h2>
+    <ul>
+      <li><strong>Access</strong> — request a copy of the personal data we hold about you.</li>
+      <li><strong>Rectification</strong> — ask us to correct inaccurate data.</li>
+      <li><strong>Erasure</strong> — ask us to delete your data. Note that uploaded files are already gone
+          after one hour.</li>
+      <li><strong>Restriction and objection</strong> — ask us to limit or stop certain processing.</li>
+      <li><strong>Portability</strong> — receive your data in a structured, machine-readable format.</li>
+      <li><strong>Withdraw consent</strong> — for advertising cookies, clear this site's storage and choose
+          "Essential only" next time.</li>
+      <li><strong>Complain</strong> — lodge a complaint with your national supervisory authority.</li>
+    </ul>
+    <p>To exercise any right, email <a href="mailto:privacy@nplaystudio.example.com">privacy@nplaystudio.example.com</a>.
+    We respond within 30 days.</p>
+
+    <h2>Data minimisation</h2>
+    <p>We deliberately do not require an account, do not ask for your name or address, and do not keep file
+    contents beyond the processing window. There is very little personal data to protect because we
+    collect very little.</p>
+
+    <h2>Security</h2>
+    <p>Traffic is served over HTTPS. Uploads are stored in per-task directories and removed by a scheduled
+    cleanup job. Access to the server is restricted to the operator.</p>
+  </div>
+</main>
+</body>
+</html>

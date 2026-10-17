@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Compress — Shrink MP4, MKV, WebM, MOV | NPlayStudio</title>
+<meta name="description" content="Compress video files online for free. Choose a quality preset or a custom CRF, cap the resolution, and download a smaller file. No signup, no watermark.">
+<link rel="canonical" href="/video-compress.html">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="breadcrumb"><a href="/">Dashboard</a> / Video Compress</p>
+  <h1>Video Compress</h1>
+  <p>Reduce the size of any video with H.264, H.265 or VP9. Lower CRF means higher quality;
+     the presets pick a sensible CRF for you.</p>
+
+  <div class="card" data-tool data-endpoint="/api/video/compress">
+    <div class="dropzone" data-dropzone tabindex="0" role="button" aria-label="Upload a video">
+      <strong>Drop a video here, or click to browse</strong>
+      <span>MP4, MKV, WebM, AVI, MOV, M4V, WMV, FLV — up to 512 MB</span>
+    </div>
+    <input type="file" accept="video/*,.mkv,.avi,.mov,.m4v,.wmv,.flv" hidden>
+    <ul class="file-list" data-file-list></ul>
+    <video class="preview" data-preview controls muted hidden></video>
+
+    <form>
+      <div class="row">
+        <div class="field">
+          <label for="quality">Quality preset</label>
+          <select id="quality" name="quality">
+            <option value="high">High — best quality</option>
+            <option value="balanced" selected>Balanced — recommended</option>
+            <option value="small">Small — maximum savings</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="format">Output container</label>
+          <select id="format" name="format">
+            <option value="mp4" selected>MP4</option>
+            <option value="mkv">MKV</option>
+            <option value="webm">WebM</option>
+            <option value="mov">MOV</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="codec">Video codec</label>
+          <select id="codec" name="codec">
+            <option value="h264" selected>H.264 (widest support)</option>
+            <option value="h265">H.265 / HEVC (smaller)</option>
+            <option value="vp9">VP9 (WebM)</option>
+          </select>
+          <p class="hint">Codec support depends on the container: WebM only accepts VP9.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="resolution">Resolution</label>
+          <select id="resolution" name="resolution">
+            <option value="" selected>Keep original</option>
+            <option value="1920x1080">1080p</option>
+            <option value="1280x720">720p</option>
+            <option value="854x480">480p</option>
+            <option value="640x360">360p</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="crf">Custom CRF (optional)</label>
+          <input type="number" id="crf" name="crf" min="0" max="51" placeholder="e.g. 28">
+          <p class="hint">Overrides the preset. 18 = near-lossless, 28 = small, 34 = very small.</p>
+        </div>
+        <div class="field">
+          <label for="audio_bitrate">Audio bitrate</label>
+          <select id="audio_bitrate" name="audio_bitrate">
+            <option value="96k">96k</option>
+            <option value="128k" selected>128k</option>
+            <option value="192k">192k</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" data-submit disabled>Compress video</button>
+    </form>
+
+    <div class="progress-wrap" data-progress-wrap hidden>
+      <div class="progress-track"><div class="progress-bar" data-progress-bar></div></div>
+      <div class="progress-meta">
+        <span class="status-pill" data-status-pill data-status="queued">queued</span>
+        <span data-progress-pct>0%</span>
+      </div>
+    </div>
+    <div class="notice" data-notice hidden></div>
+    <div data-result hidden></div>
+  </div>
+</main>
+</body>
+</html>

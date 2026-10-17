@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPlayStudio — Free Online Video, Audio & Image Toolkit</title>
+<meta name="description" content="NPlayStudio is a free online toolkit to compress, convert, merge and extract video, audio and images. No signup, no watermark, files auto-deleted after 1 hour.">
+<link rel="canonical" href="/">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/assets/app.js" defer></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <h1>Create. <span class="gradient-text">Convert.</span> Compress.</h1>
+    <p>Nine free tools for video, audio and images — running on your own FFmpeg pipeline.
+       No account, no watermark, no payment wall. Uploaded files are deleted automatically after one hour.</p>
+  </section>
+
+  <section aria-label="Usage statistics">
+    <div class="stat-grid" id="stat-grid"></div>
+  </section>
+
+  <div class="toolbar" style="margin-top:2rem">
+    <input type="text" id="tool-search" placeholder="Search tools…" aria-label="Search tools">
+    <div class="chips" role="group" aria-label="Filter by category">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-filter="video" aria-pressed="false">Video</button>
+      <button class="chip" type="button" data-filter="audio" aria-pressed="false">Audio</button>
+      <button class="chip" type="button" data-filter="image" aria-pressed="false">Image</button>
+    </div>
+  </div>
+
+  <div class="grid" id="tool-grid"></div>
+
+  <div class="notice notice-info">
+    <strong>Files are temporary.</strong> Every upload and output is removed from the server one hour after
+    processing. Nothing is shared, sold or used to train anything.
+  </div>
+
+  <div class="section-head">
+    <h2>Recent activity</h2>
+    <a href="/sitemap.html">All pages →</a>
+  </div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Tool</th><th>Status</th><th>In</th><th>Out</th><th>When</th></tr>
+      </thead>
+      <tbody id="activity-body"></tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>
