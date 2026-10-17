@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-label="NPlayStudio request and job pipeline: the browser calls Nginx, which serves static files and proxies /api to FastAPI. FastAPI records tasks in SQLite and enqueues work on Redis for an ARQ worker. The worker runs FFmpeg and Pillow and writes files to the outputs directory.">
+  <style>
+    text { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; }
+    .t   { fill: #e8ecff; font-size: 20px; font-weight: 600; }
+    .s   { fill: #9aa6d4; font-size: 14px; }
+    .lbl { fill: #6b7aa8; font-size: 13px; letter-spacing: 1px; }
+    .flow{ stroke: #4f7cff; stroke-width: 2; fill: none; }
+    .box { fill: #161d3a; stroke: #2a3563; stroke-width: 1.5; }
+  </style>
+
+  <rect width="1200" height="760" rx="18" fill="#0b1020"/>
+  <rect x="1" y="1" width="1198" height="758" rx="17" fill="none" stroke="#2a3563"/>
+
+  <text x="48" y="54" class="t" font-size="22">Request &amp; job pipeline</text>
+  <text x="48" y="78" class="s">What the browser talks to, and what happens to a file after it lands.</text>
+
+  <rect x="330" y="104" width="540" height="68" rx="12" class="box"/>
+  <text x="360" y="134" class="t">Browser</text>
+  <text x="360" y="156" class="s">dashboard and 9 tool pages · polls /api/status · downloads /api/file</text>
+  <text x="846" y="134" class="lbl" text-anchor="end">HTTPS</text>
+
+  <path class="flow" d="M600 172 L600 214"/>
+  <path d="M594 206 L600 216 L606 206 Z" fill="#4f7cff"/>
+
+  <rect x="330" y="218" width="540" height="86" rx="12" class="box"/>
+  <text x="360" y="248" class="t">Nginx</text>
+  <text x="360" y="270" class="s">serves frontend/ directly · TLS, gzip, security headers</text>
+  <text x="360" y="290" class="s">proxies /api/* and /docs to FastAPI on 127.0.0.1:8000</text>
+  <text x="846" y="248" class="lbl" text-anchor="end">443</text>
+
+  <path class="flow" d="M600 304 L600 346"/>
+  <path d="M594 338 L600 348 L606 338 Z" fill="#4f7cff"/>
+
+  <rect x="330" y="350" width="540" height="86" rx="12" class="box"/>
+  <text x="360" y="380" class="t">FastAPI</text>
+  <text x="360" y="402" class="s">validates the upload, stores uploads/{task_id}/, inserts a task row,</text>
+  <text x="360" y="422" class="s">enqueues the job, returns task_id straight away</text>
+  <text x="846" y="380" class="lbl" text-anchor="end">8000</text>
+
+  <path class="flow" d="M470 436 L470 478"/>
+  <path d="M464 470 L470 480 L476 470 Z" fill="#4f7cff"/>
+  <path class="flow" d="M730 436 L730 478"/>
+  <path d="M724 470 L730 480 L736 470 Z" fill="#4f7cff"/>
+
+  <rect x="330" y="482" width="250" height="86" rx="12" class="box"/>
+  <text x="356" y="512" class="t" font-size="18">SQLite</text>
+  <text x="356" y="534" class="s">tasks, downloads,</text>
+  <text x="356" y="552" class="s">stats, presets</text>
+
+  <rect x="620" y="482" width="250" height="86" rx="12" class="box"/>
+  <text x="646" y="512" class="t" font-size="18">Redis + ARQ</text>
+  <text x="646" y="534" class="s">job queue, progress,</text>
+  <text x="646" y="552" class="s">1-hour TTL</text>
+
+  <path class="flow" d="M745 568 L745 610"/>
+  <path d="M739 602 L745 612 L751 602 Z" fill="#4f7cff"/>
+
+  <rect x="330" y="614" width="540" height="112" rx="12" class="box"/>
+  <text x="360" y="644" class="t">ARQ worker</text>
+  <text x="360" y="666" class="s">FFmpeg for video and audio · Pillow for images</text>
+  <text x="360" y="686" class="s">writes outputs/{task_id}/, streams progress back to Redis,</text>
+  <text x="360" y="706" class="s">a cron deletes uploads and outputs once the TTL expires</text>
+  <text x="846" y="644" class="lbl" text-anchor="end">WORKER</text>
+</svg>

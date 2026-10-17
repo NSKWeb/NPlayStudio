@@ -130,3 +130,11 @@ with the `workflow` scope; a `repo`-only token is rejected by GitHub.
   upload → worker → download). `--local` skips DNS/cert and targets
   `127.0.0.1` with `-k`. Both configs were validated with `nginx -t` inside
   `nginx:1.26-alpine` with a self-signed cert.
+- README images live in `docs/` (hand-written SVG diagrams) and
+  `docs/screenshots/` (captured PNGs). Regenerate the PNGs with
+  `python3 scripts/capture_screenshots.py <base_url>`; it needs Playwright and
+  the system Chromium. It presets `nplay.theme` and `nplay.consent` in
+  localStorage, because the app reads both from there and a default headless run
+  otherwise captures the light theme with the cookie dialog over the page. Keep
+  `device_scale_factor` at 1: GitHub renders README images at about 880px, and
+  2x screenshots were both larger on disk and no sharper.

@@ -1,69 +1,127 @@
+<img src="docs/banner.svg" alt="NPlayStudio — Create. Convert. Compress. A free online media toolkit." width="100%">
+
 # NPlayStudio
 
 **Create. Convert. Compress.**
 
-A free online media toolkit. Nine tools for video, audio and images, built on a
-FastAPI backend that drives FFmpeg and Pillow, with Redis/ARQ for background jobs
-and SQLite for persistence.
+Nine free tools for video, audio and images. FastAPI drives FFmpeg and Pillow,
+Redis and ARQ run the jobs in the background, and SQLite keeps the task history.
+No account, no watermark, no payment wall — uploads are deleted an hour after
+processing.
 
-No account, no watermark, no payment wall. Uploaded files are deleted one hour
-after processing.
-
----
-
-## Tools
-
-| Category | Tool | Endpoint |
-|---|---|---|
-| Video | Compress | `POST /api/video/compress` |
-| Video | Convert | `POST /api/video/convert` |
-| Video | Merge | `POST /api/video/merge` |
-| Video | To GIF | `POST /api/video/to-gif` |
-| Audio | Extract | `POST /api/audio/extract` |
-| Audio | Convert | `POST /api/audio/convert` |
-| Image | Compress | `POST /api/image/compress` |
-| Image | Convert | `POST /api/image/convert` |
-| Image | Crop | `POST /api/image/crop` |
-
-Supporting endpoints: `GET /api/status/{task_id}`, `GET /api/file/{task_id}`,
-`GET /api/history`, `GET /api/stats`, `GET /api/tools`, `GET /api/presets`,
-`DELETE /api/task/{task_id}`, `GET /health`.
-
-Interactive API docs are served at `/docs`.
+[![CI](https://github.com/NSKWeb/NPlayStudio/actions/workflows/deploy.yml/badge.svg)](https://github.com/NSKWeb/NPlayStudio/actions/workflows/deploy.yml)
+[![Python](https://img.shields.io/badge/python-3.12%2B-4f7cff)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-8b5cf6)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/docker-compose-4f7cff)](https://docs.docker.com/compose/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
 
 ---
 
-## Architecture
+## What it is
 
-```
-Browser
-  │  HTTPS
-  ▼
-Nginx ── static files from frontend/
-  │      /api/* ──┐
-  ▼               │
-FastAPI ──────────┘
-  │
-  ├─ SQLite          tasks, downloads, stats, presets
-  ├─ Redis + ARQ     job queue, progress, 1-hour TTL
-  ▼
-ARQ worker
-  ├─ FFmpeg          video + audio
-  ├─ Pillow          images
-  └─ filesystem      uploads/ and outputs/, cleaned on a cron
-```
+A single web app that does the boring media chores without an account or a
+watermark. You drop a file on a tool page, watch a real progress bar, and get
+the result back.
 
-A job flows as: upload → validate → save to `uploads/{task_id}/` → insert a
-`queued` task row → enqueue on Redis → worker flips it to `processing` and
-streams progress → output lands in `outputs/{task_id}/` → status becomes `done`
-→ the browser polls, then downloads. A cron job deletes anything older than the
-TTL.
+| | |
+|---|---|
+| **9 tools** | 4 video, 2 audio, 3 image |
+| **No signup** | No login, no email, no quota |
+| **No watermark** | Output is clean |
+| **Self-cleaning** | Every upload and output is deleted after 1 hour |
+| **Real progress** | Read from ffmpeg's own `-progress` stream, not estimated |
+| **Self-hosted** | Docker Compose plus nginx; runs on one small VPS |
+
+<img src="docs/screenshots/home.png" alt="NPlayStudio dashboard: hero, live usage statistics, search and category filters, and a grid of the nine tool cards." width="100%">
+
+---
+
+## The nine tools
+
+<img src="docs/tools.svg" alt="The nine tools grouped by category: video (compress, convert, merge, to GIF), audio (extract, convert), image (compress, convert, crop)." width="100%">
+
+| Category | Tool | Endpoint | What it does |
+|---|---|---|---|
+| Video | Compress | `POST /api/video/compress` | Quality preset or explicit CRF, optional resize and codec |
+| Video | Convert | `POST /api/video/convert` | MP4, MKV, WebM, AVI, MOV |
+| Video | Merge | `POST /api/video/merge` | Join clips; stream-copy when they match, re-encode when they do not |
+| Video | To GIF | `POST /api/video/to-gif` | Optimised GIF with a generated palette |
+| Audio | Extract | `POST /api/audio/extract` | Pull the audio track out of a video |
+| Audio | Convert | `POST /api/audio/convert` | MP3, M4A, WAV, FLAC, OPUS, AAC, OGG |
+| Image | Compress | `POST /api/image/compress` | Quality and optional max-width, can re-container |
+| Image | Convert | `POST /api/image/convert` | JPG, PNG, WebP, GIF, BMP, TIFF |
+| Image | Crop | `POST /api/image/crop` | Exact `x`, `y`, `width`, `height` |
+
+Every tool answers with a `task_id`. Supporting endpoints: `GET /api/status/{task_id}`,
+`GET /api/file/{task_id}`, `GET /api/history`, `GET /api/stats`, `GET /api/tools`,
+`GET /api/presets`, `DELETE /api/task/{task_id}` and `GET /health`. Interactive
+docs live at `/docs`.
+
+Here is a tool page — pick a file, choose options, press one button:
+
+<img src="docs/screenshots/video-compress.png" alt="The Video Compress tool page: a drag-and-drop file area, a quality preset selector, resolution and format options, and a Compress button." width="100%">
+
+A few more, one from each category:
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/video-merge.png" alt="The Video Merge tool page with several files queued for concatenation."></td>
+<td width="50%"><img src="docs/screenshots/video-to-gif.png" alt="The Video to GIF tool page with fps, width and duration controls."></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/audio-extract.png" alt="The Audio Extract tool page with output format and bitrate controls."></td>
+<td><img src="docs/screenshots/image-crop.png" alt="The Image Crop tool page with x, y, width and height inputs."></td>
+</tr>
+</table>
+
+---
+
+## How it works
+
+### What happens to a file
+
+<img src="docs/lifecycle.svg" alt="Job lifecycle: upload is validated and stored, a task row is inserted as queued, the worker flips it to processing while streaming progress, the output is written and the status becomes done, then the browser downloads it. A cron deletes files after one hour." width="100%">
+
+Upload → validate → store in `uploads/{task_id}/` → insert a `queued` task row →
+enqueue on Redis → the worker flips it to `processing` and streams progress →
+the output lands in `outputs/{task_id}/` → status becomes `done` → the browser
+polls and downloads. A cron deletes anything older than the TTL.
+
+Because the API returns as soon as the job is queued, a long encode never holds
+an HTTP request open. The page polls `/api/status/{task_id}` and shows the
+percentage the worker is reporting.
+
+### What runs where
+
+<img src="docs/architecture.svg" alt="Request and job pipeline: the browser calls Nginx, which serves static files and proxies /api to FastAPI. FastAPI records tasks in SQLite and enqueues work on Redis for an ARQ worker, which runs FFmpeg and Pillow and writes to the outputs directory." width="100%">
+
+Nginx serves the static frontend itself and only proxies `/api/*` and `/docs` to
+FastAPI, which is bound to loopback. The worker is a separate process, so a heavy
+encode does not slow the API down.
+
+### Design decisions worth knowing
+
+- **Progress is real.** `-progress pipe:1` is parsed off ffmpeg's stdout; the
+  percentage is encoded duration over input duration, capped at 99 until the
+  process exits.
+- **Merge tries the cheap path first.** Stream-copy is instant but only works
+  when every input shares codecs, so a failure falls back to a normalising
+  re-encode. Inputs with no audio track get generated silence, otherwise
+  `concat` rejects the filtergraph.
+- **Odd dimensions are normalised.** libx264 and libx265 refuse odd width or
+  height, so every video is rounded down to even dimensions even when no resize
+  was asked for.
+- **Uploads are capped and type-checked** before anything is written to disk
+  (`NPLAY_MAX_UPLOAD_MB`, `NPLAY_MAX_MERGE_FILES`).
+- **The inline worker exists for development.** `NPLAY_INLINE_WORKER=true` runs
+  jobs inside the API process so you do not need Redis locally. The test suite
+  uses it; production should not.
 
 ---
 
 ## Quick start (local, no Docker)
 
-Requires Python 3.12+, `ffmpeg`, and Redis.
+Needs Python 3.12+, `ffmpeg` and Redis.
 
 ```bash
 # 1. System dependencies (Debian/Ubuntu)
@@ -100,7 +158,7 @@ docker compose ps
 ```
 
 This starts three services: `redis`, `api` (port 8000, bound to loopback only)
-and `worker`. Uploads, outputs and the SQLite file live in named volumes so a
+and `worker`. Uploads, outputs and the SQLite file live in named volumes, so a
 rebuild does not lose data.
 
 ---
@@ -133,10 +191,10 @@ All settings use the `NPLAY_` prefix and can be set in `backend/.env`.
 python3 -m pytest backend/tests -q
 ```
 
-The suite is end-to-end and uses no mocks: it generates real media with FFmpeg,
-uploads it through a real HTTP client, lets the real worker process it, and
-verifies the downloaded bytes carry the right container signature. `test_units.py`
-covers the SQLite layer and the service helpers directly.
+79 tests, no mocks. The suite generates real media with FFmpeg, uploads it
+through a real HTTP client, lets the real worker process it, and checks the
+downloaded bytes carry the right container signature. `test_units.py` covers the
+SQLite layer and the service helpers directly.
 
 ---
 
@@ -180,6 +238,13 @@ The manual equivalent:
    ```bash
    sudo certbot --nginx -d yourdomain.com --redirect
    ```
+7. **Swap in the hardened config** (gzip, security headers, long proxy timeouts,
+   `/docs` proxy) and reload:
+   ```bash
+   sudo sed 's/nplaystudio\.example\.com/yourdomain.com/g' \
+       nginx/nginx.conf > /etc/nginx/sites-available/nplaystudio
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
 8. **Verify and back up.**
    ```bash
    ./scripts/smoke-test.sh yourdomain.com
@@ -205,7 +270,7 @@ sitemap and the legal pages, and derives `support@`, `dmca@` and `privacy@`
 from the domain:
 
 ```bash
-./scripts/configure-domain.sh nplaystudio.com            # role addresses
+./scripts/configure-domain.sh nplaystudio.com               # role addresses
 ./scripts/configure-domain.sh nplaystudio.com you@mail.com  # one shared address
 ```
 
@@ -214,6 +279,23 @@ Then:
 - Set your real AdSense publisher ID in `frontend/index.html` (currently
   `ca-pub-0000000000000000`).
 - Serve over HTTPS only — the cookie banner and AdSense both expect it.
+
+---
+
+## Docs and legal pages
+
+The site ships the pages a public tool site is expected to have. The screenshot
+below is from a local run.
+
+| Page | Path |
+|---|---|
+| Sitemap index (human-readable) | `/sitemap.html` |
+| FAQ | `/faq.html` |
+| About, Contact | `/about.html`, `/contact.html` |
+| Privacy, Terms, DMCA, Cookie, Disclaimer | `/privacy.html`, `/terms.html`, `/dmca.html`, `/cookie.html`, `/disclaimer.html` |
+| API docs (Swagger UI) | `/docs` |
+
+<img src="docs/screenshots/faq.png" alt="The FAQ page: a list of expandable questions about file size limits, retention, formats and privacy." width="100%">
 
 ---
 
@@ -231,10 +313,22 @@ backend/tests/       end-to-end and unit tests
 frontend/            dashboard, 9 tool pages, legal pages, assets
 nginx/nginx.conf     reverse proxy template
 nginx/nplaystudio.pre-certbot.conf  HTTP-only config for the first certbot run
-scripts/             configure-domain.sh, vps-bootstrap.sh, smoke-test.sh
+scripts/             configure-domain.sh, vps-bootstrap.sh, smoke-test.sh,
+                     capture_screenshots.py
+docs/                banner and diagram SVGs, README screenshots
 Dockerfile           shared image for the API and the worker
 docker-compose.yml   redis + api + worker
 ```
+
+The screenshots in this README are not hand-made. Bring the stack up and run:
+
+```bash
+python3 scripts/capture_screenshots.py http://127.0.0.1:8000
+```
+
+It drives the system Chromium through Playwright, forces the dark theme, and
+dismisses the cookie banner by presetting the app's own localStorage keys, so
+the images show the real UI without a consent dialog in the way.
 
 ---
 

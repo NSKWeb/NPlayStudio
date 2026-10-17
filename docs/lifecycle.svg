@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-label="Job lifecycle: upload is validated, the task row is inserted as queued, the worker flips it to processing while streaming progress, the output is written and the status becomes done, then the browser downloads it. A cron deletes files after one hour.">
+  <style>
+    text { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; }
+    .n   { fill: #e8ecff; font-size: 16px; font-weight: 600; }
+    .s   { fill: #9aa6d4; font-size: 12px; }
+    .flow{ stroke: #2a3563; stroke-width: 2; fill: none; }
+  </style>
+
+  <rect width="1200" height="300" rx="18" fill="#0b1020"/>
+  <rect x="1" y="1" width="1198" height="298" rx="17" fill="none" stroke="#2a3563"/>
+
+  <text x="48" y="52" fill="#e8ecff" font-size="20" font-weight="700">Job lifecycle</text>
+  <text x="48" y="76" class="s" font-size="13">A file moves left to right. Nothing blocks: the API answers as soon as the job is queued.</text>
+
+  <!-- steps -->
+  <g>
+    <rect x="48" y="112" width="176" height="84" rx="11" fill="#161d3a" stroke="#4f7cff" stroke-width="2"/>
+    <text x="70" y="146" class="n">Upload</text>
+    <text x="70" y="168" class="s">validated, stored in</text>
+    <text x="70" y="184" class="s">uploads/{task_id}/</text>
+  </g>
+  <path class="flow" d="M224 154 L268 154"/>
+  <path d="M260 148 L270 154 L260 160 Z" fill="#2a3563"/>
+
+  <g>
+    <rect x="272" y="112" width="176" height="84" rx="11" class="box" fill="#161d3a" stroke="#2a3563"/>
+    <text x="294" y="146" class="n">Queued</text>
+    <text x="294" y="168" class="s">task row inserted,</text>
+    <text x="294" y="184" class="s">enqueued on Redis</text>
+  </g>
+  <path class="flow" d="M448 154 L492 154"/>
+  <path d="M484 148 L494 154 L484 160 Z" fill="#2a3563"/>
+
+  <g>
+    <rect x="496" y="112" width="176" height="84" rx="11" fill="#161d3a" stroke="#f59e0b" stroke-width="2"/>
+    <text x="518" y="146" class="n">Processing</text>
+    <text x="518" y="168" class="s">worker runs FFmpeg</text>
+    <text x="518" y="184" class="s">or Pillow, streams %</text>
+  </g>
+  <path class="flow" d="M672 154 L716 154"/>
+  <path d="M708 148 L718 154 L708 160 Z" fill="#2a3563"/>
+
+  <g>
+    <rect x="720" y="112" width="176" height="84" rx="11" fill="#161d3a" stroke="#22c55e" stroke-width="2"/>
+    <text x="742" y="146" class="n">Done</text>
+    <text x="742" y="168" class="s">output written to</text>
+    <text x="742" y="184" class="s">outputs/{task_id}/</text>
+  </g>
+  <path class="flow" d="M896 154 L940 154"/>
+  <path d="M932 148 L942 154 L932 160 Z" fill="#2a3563"/>
+
+  <g>
+    <rect x="944" y="112" width="208" height="84" rx="11" fill="#161d3a" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="966" y="146" class="n">Download</text>
+    <text x="966" y="168" class="s">browser fetches</text>
+    <text x="966" y="184" class="s">/api/file/{task_id}</text>
+  </g>
+
+  <!-- ttl note -->
+  <rect x="48" y="226" width="1104" height="46" rx="11" fill="#121933" stroke="#2a3563"/>
+  <text x="72" y="254" class="s" font-size="13">After one hour a cron removes the upload and the output. Progress is read from ffmpeg's own -progress stream, not estimated.</text>
+</svg>

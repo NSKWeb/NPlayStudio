@@ -10,6 +10,7 @@ outputs/
 *.mp3
 *.jpg
 *.png
+!docs/screenshots/*.png
 .vscode/
 .idea/
 .DS_Store
