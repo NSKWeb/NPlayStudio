@@ -77,3 +77,26 @@ audio, a silent clip, an MP3, PNG/JPG stills) and sets the env vars before the
 app is imported. Tests assert on real container magic bytes
 (`conftest.assert_signature`) rather than mocks. `test_tools.py` drives the full
 HTTP → queue → worker → download path; `test_units.py` covers SQLite and helpers.
+
+## Bug-hunting notes (verified failures)
+
+These were real defects found by exercising the running app, each now covered
+by a regression test that fails on the old code:
+
+- Uploads of the same filename collide. All parts of one job are written to a
+  single directory keyed by the client-supplied name, so `dir / name` silently
+  replaced the first file and merge concatenated one clip twice. Use
+  `file_service.unique_path()` for any per-job input path.
+- `scale=WxH` with an odd dimension dies in libx264/libx265 ("width not
+  divisible by 2"). Round odd values down; `_scale_filter` and the merge
+  filtergraph both do this now.
+- Seeking at or past a clip's end makes ffmpeg emit an empty GIF and
+  "Error writing trailer: Invalid argument". Check `start` against the probed
+  duration before running.
+- `safe_filename` truncated the entire name, which strips the extension from a
+  long filename and then fails the extension allowlist. Truncate the stem only.
+
+Quick manual probe pattern (no test suite needed): set the `NPLAY_*` env vars to
+a temp dir, import `create_app`, drive it with `TestClient`, and poll
+`/api/status/{id}`. `NPLAY_INLINE_WORKER=true` runs jobs in-process, so Redis is
+not required.
