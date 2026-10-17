@@ -132,6 +132,21 @@ def test_safe_filename(raw, expected):
     assert file_service.safe_filename(raw) == expected
 
 
+def test_safe_filename_keeps_extension_when_truncating():
+    """A long name is cut on the stem, so the extension survives the allowlist."""
+    result = file_service.safe_filename("x" * 200 + ".mp4")
+    assert result.endswith(".mp4")
+    assert len(result) <= 120
+
+
+def test_unique_path_avoids_overwriting_same_name(tmp_path):
+    first = file_service.unique_path(tmp_path, "clip.mp4")
+    first.write_bytes(b"a")
+    second = file_service.unique_path(tmp_path, "clip.mp4")
+    assert second != first
+    assert second.name == "clip_1.mp4"
+
+
 @pytest.mark.parametrize(
     "name,kind",
     [("a.mp4", "video"), ("a.mkv", "video"), ("a.mp3", "audio"),
@@ -174,6 +189,9 @@ def test_crf_presets_ordering():
 def test_scale_filter_uses_even_dimensions():
     assert ffmpeg_service._scale_filter(None) == []
     assert ffmpeg_service._scale_filter("1280x720") == ["-vf", "scale=1280:720"]
+    # Odd dimensions are rounded down; libx264 rejects them outright.
+    assert ffmpeg_service._scale_filter("641x361") == ["-vf", "scale=640:360"]
+    assert ffmpeg_service._scale_filter("3x3") == ["-vf", "scale=2:2"]
 
 
 def test_audio_args_lossless_ignores_bitrate():

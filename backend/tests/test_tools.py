@@ -338,6 +338,78 @@ def test_download_before_ready_returns_409(client, sample_mp4):
     db.delete_task("pending-test")
 
 
+# ------------------------------------------------------- regression guards
+
+
+def _duration(path) -> float:
+    import subprocess
+
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=nw=1:nk=1", str(path)],
+        capture_output=True, text=True,
+    )
+    return float(out.stdout.strip())
+
+
+def test_video_merge_identical_filenames_keeps_both_inputs(client, sample_mp4, second_mp4):
+    """Two uploads sharing a filename must not overwrite each other.
+
+    Parts are written to the same directory, so a naive ``dir / name`` silently
+    replaces the first file and the merge returns the second clip twice. The
+    merged duration proves whether both inputs survived.
+    """
+    expected = _duration(sample_mp4) + _duration(second_mp4)
+    with sample_mp4.open("rb") as a, second_mp4.open("rb") as b:
+        status = _run(
+            client, "/api/video/merge",
+            [("files", ("clip.mp4", a, "video/mp4")),
+             ("files", ("clip.mp4", b, "video/mp4"))],
+            {"format": "mp4"},
+            container="mp4",
+        )
+
+    produced = get_settings().output_path / status["output_file"]
+    actual = _duration(produced)
+    assert actual >= expected * 0.9, (
+        f"merged duration {actual:.2f}s is shorter than the {expected:.2f}s of both "
+        "inputs, so an upload was overwritten"
+    )
+
+
+def test_video_compress_accepts_odd_resolution(client, sample_mp4):
+    """Odd target dimensions are rounded down instead of failing the encode."""
+    with sample_mp4.open("rb") as handle:
+        _run(
+            client, "/api/video/compress",
+            {"file": (sample_mp4.name, handle, "video/mp4")},
+            {"resolution": "161x121", "quality": "small", "format": "mp4", "codec": "h264"},
+            container="mp4",
+        )
+
+
+def test_video_to_gif_rejects_start_past_end(client, sample_mp4):
+    """A start offset beyond the clip fails with a clear message, not an empty GIF."""
+    with sample_mp4.open("rb") as handle:
+        task_id = _submit(
+            client, "/api/video/to-gif",
+            {"file": (sample_mp4.name, handle, "video/mp4")},
+            {"fps": "10", "width": "160", "start": "3600"},
+        )
+    status = _wait(client, task_id)
+    assert status["status"] == "failed"
+    assert "beyond the video length" in (status.get("error") or "")
+
+    from backend.app.database import get_db
+
+    db = get_db()
+    task = db.create_task("pending-test", "video/compress", {})
+    assert task["status"] == "queued"
+    response = client.get("/api/file/pending-test")
+    assert response.status_code == 409
+    db.delete_task("pending-test")
+
+
 def test_path_traversal_is_blocked(client):
     from backend.app.database import get_db
     from backend.app.services import file_service

@@ -121,8 +121,10 @@ def _scale_filter(resolution: str | None) -> list[str]:
     if not resolution:
         return []
     width, _, height = resolution.partition("x")
-    # -2 keeps aspect ratio and guarantees an even dimension for the encoder.
-    return ["-vf", f"scale={int(width)}:{int(height)}"]
+    # Round odd dimensions down: H.264/H.265 reject odd width or height.
+    even_width = max(2, int(width) - int(width) % 2)
+    even_height = max(2, int(height) - int(height) % 2)
+    return ["-vf", f"scale={even_width}:{even_height}"]
 
 
 def _codec_args(codec: str, container: str, crf: int | None, preset: str = "medium") -> list[str]:
@@ -244,7 +246,10 @@ async def _merge_reencode(
     for index in range(len(sources)):
         if resolution:
             width, _, height = resolution.partition("x")
-            chains.append(f"[{index}:v]scale={int(width)}:{int(height)},setsar=1[v{index}]")
+            # libx264/libx265 refuse odd dimensions, so round down to even.
+            even_width = max(2, int(width) - int(width) % 2)
+            even_height = max(2, int(height) - int(height) % 2)
+            chains.append(f"[{index}:v]scale={even_width}:{even_height},setsar=1[v{index}]")
         else:
             chains.append(f"[{index}:v]scale=trunc(iw/2)*2:trunc(ih/2)*2,setsar=1[v{index}]")
 
@@ -275,6 +280,14 @@ async def video_to_gif(
     start: float = 0, duration: float | None = None,
     on_progress: ProgressCb | None = None,
 ) -> None:
+    # Seeking at or past the end yields an empty GIF and a cryptic ffmpeg
+    # failure, so reject it up front with a message the client can act on.
+    if start:
+        total = await measure_duration(src)
+        if total and start >= total:
+            raise FFmpegError(
+                f"start time {start:g}s is beyond the video length ({total:.2f}s)"
+            )
     args: list[str] = []
     if start:
         args += ["-ss", str(start)]

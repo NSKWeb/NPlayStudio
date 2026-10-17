@@ -26,7 +26,7 @@ async def save_upload(upload: UploadFile, task_id: str, allowed_ext: set[str]) -
                    + ", ".join(sorted(allowed_ext)),
         )
 
-    destination = file_service.task_upload_dir(task_id) / filename
+    destination = file_service.unique_path(file_service.task_upload_dir(task_id), filename)
     size = 0
     try:
         with destination.open("wb") as handle:

@@ -28,7 +28,28 @@ def safe_filename(name: str, fallback: str = "upload") -> str:
     stem = _SAFE_CHARS.sub("_", stem).strip("._-")
     if not stem:
         return fallback
-    return stem[:120]
+    # Truncate the stem only, never the extension: a 120-char cut would strip
+    # the suffix from a long name and the upload would fail the allowlist.
+    path = Path(stem)
+    suffix = path.suffix[:16]
+    return f"{path.stem[: 120 - len(suffix)]}{suffix}"
+
+
+def unique_path(directory: Path, filename: str) -> Path:
+    """Return a non-colliding path for ``filename`` inside ``directory``.
+
+    Uploads keep their sanitized name, so two inputs named the same would
+    overwrite each other and the job would silently process one file twice.
+    """
+    candidate = directory / filename
+    if not candidate.exists():
+        return candidate
+    stem, suffix = candidate.stem, candidate.suffix
+    for index in range(1, 1000):
+        alternative = directory / f"{stem}_{index}{suffix}"
+        if not alternative.exists():
+            return alternative
+    raise ValueError("too many files share the same name")
 
 
 def media_kind(path: str | Path) -> str:
